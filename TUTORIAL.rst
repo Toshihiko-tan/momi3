@@ -64,7 +64,6 @@ Here, we will set the recombination rate to 1e-8 and the sequence length to 10 m
     )
     ts = msp.sim_mutations(anc, rate=1e-8)
 
-============
 Inference using SFS-based methods
 ============
 
