@@ -8,7 +8,7 @@ import numpy as np
 import scipy
 from jax.scipy.special import gammaln as gammaln
 
-from momi3 import events
+from momi3.sfs import events
 from momi3.common import get_path
 from momi3.event_tree import ETBuilder
 from momi3.Params import Params

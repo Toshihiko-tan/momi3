@@ -9,7 +9,7 @@ from jax import jit, vmap
 from jax.experimental.sparse import BCOO
 from scipy.sparse.linalg import LinearOperator, expm_multiply
 
-from momi3.kronprod import KronProd
+from momi3.sfs import KronProd
 
 
 @singledispatch
