@@ -104,7 +104,7 @@ We use ``reparameterize()`` to map the constrained parameter space into an uncon
     parameters = list(x.keys())
 
 We now evaluate the likelihood over a range of values for ``start_size`` to visualize how the likelihood varies with this parameter.
-Here, we will sweep the parameter from 5000 to 20000 in increments of 100. You can adjust the range and step size as needed.
+Here, we will sweep the parameter from 5000 to 20000 by creating 100 intervals with the ``linspace()`` function. You can adjust the range and step size as needed.
 
 .. code-block:: python
 
