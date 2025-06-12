@@ -5,20 +5,22 @@ Installation
 We recommend using a virtual environment to manage dependencies for the ``momi3`` package. This helps avoid conflicts with other Python packages and ensures a clean installation.
 
 To set up a virtual environment, you can use `venv` or `conda`. Here’s how to do it with `venv`:
-.. code-block:: bash
+
+.. code:: bash
 
    python -m venv momi3-env
    source momi3-env/bin/activate  # On Windows use `momi3-env\Scripts\activate`
 
 Alternatively, if you prefer `conda`, you can create an environment with:
-.. code-block:: bash
+
+.. code:: bash
 
    conda create -n momi3-env
    conda activate momi3-env
 
 You can then install ``momi3`` and all its dependencies using pip from the GitHub repository:
 
-.. code-block:: bash
+.. code:: bash
 
    pip install git+https://github.com/jthlab/momi3.git@iicr
 

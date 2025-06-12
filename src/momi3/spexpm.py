@@ -9,8 +9,7 @@ from jax import jit, vmap
 from jax.experimental.sparse import BCOO
 from scipy.sparse.linalg import LinearOperator, expm_multiply
 
-from momi3.sfs import KronProd
-
+from momi3.kronprod import KronProd
 
 @singledispatch
 def expmv(A: np.ndarray | jnp.ndarray, B: jnp.ndarray) -> jnp.ndarray:

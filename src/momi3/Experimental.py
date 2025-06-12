@@ -1,4 +1,4 @@
-from momi3.momi import Momi3 as Momi
+from momi3.momi import Momi
 from momi3.Params import Params
 from momi3.utils import tqdm
 
