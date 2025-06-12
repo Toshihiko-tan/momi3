@@ -40,6 +40,7 @@ This third version is a complete rewrite of the original momi and momi2 packages
 For installation instructions, a tutorial, and API reference, please refer to the documentation.
 
 The method is described in the following preprint:
+
 Dilber, E., & Terhorst, J. (2024, March 29). Faster inference of complex demographic models from large allele frequency spectra [Preprint]. bioRxiv. https://doi.org/10.1101/2024.03.26.586844
 
 
