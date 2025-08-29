@@ -44,7 +44,7 @@ We can visualize the demographic model we created using ``demesdraw``.
     g = demo.to_demes()
     demesdraw.tubes(g)
 
-.. image:: /images/demo.png
+.. image:: _images/demo.png
    :alt: Demographic model visualization
    :align: center
 
@@ -163,7 +163,7 @@ Then, we try to inference the split time between the ancestral population and th
     vec_values = jnp.linspace(500, 1500, 50)
     result = plot_sfs_likelihood(g, paths, vec_values, afs, afs_samples)
 
-.. image:: /images/split_time.png
+.. image:: images/split_time.png
    :alt: Split Time
    :align: center
 

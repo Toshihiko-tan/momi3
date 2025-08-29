@@ -11,10 +11,12 @@ Contents
 
    Introduction <readme>
    Installation <installation>
+   Notation <notation>
    Tutorial <tutorial>
    License <license>
    Authors <authors>
    Module Reference <api/modules>
+
 
 
 Indices and tables
