@@ -13,21 +13,21 @@ We follow the notation used in the ``demes`` package.
 
 **Examples:**
 
-- Starting and ending size of the ancestral population ``anc`` (the first deme, index 0, with one epoch):
+Starting and ending size of the ancestral population ``anc`` (the first deme, index 0, with one epoch):
 
-  .. code-block:: python
+.. code-block:: python
 
-      ("demes", 0, "epochs", 0, "start_size")
-      ("demes", 0, "epochs", 0, "end_size")
+    ("demes", 0, "epochs", 0, "start_size")
+    ("demes", 0, "epochs", 0, "end_size")
 
-- Starting and ending time of the first epoch of ``anc``:
+Starting and ending time of the first epoch of ``anc``:
 
-  .. code-block:: python
+.. code-block:: python
 
-      ("demes", 0, "epochs", 0, "start_time")
-      ("demes", 0, "epochs", 0, "end_time")
+    ("demes", 0, "epochs", 0, "start_time")
+    ("demes", 0, "epochs", 0, "end_time")
 
-- Migration rate between two populations in a simple IWM model:
+Migration rate between two populations in a simple IWM model:
 
   .. code-block:: python
 
