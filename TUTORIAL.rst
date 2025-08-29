@@ -18,6 +18,7 @@ We begin by simulating genetic data under a simple demographic model using the `
 To get started, import the necessary packages:
 
 .. code-block:: python
+
     import msprime as msp
     import demes
     import demesdraw
@@ -26,6 +27,7 @@ For simplicity, we consider a scenario with two subpopulations (P0 and P1) that 
 We assume all populations have constant effective population sizes of 5000, and the subpopulations exchange migrants at a symmetric migration rate of 0.0001.
 
 .. code-block:: python
+
     demo = msp.Demography()
     demo.add_population(initial_size = 5000, name = "anc")
     demo.add_population(initial_size = 5000, name = "P0")
@@ -36,11 +38,13 @@ We assume all populations have constant effective population sizes of 5000, and 
 Then, we specify the split time to be 1000 generations between the subpopulations and the ancestral population:
 
 .. code-block:: python
+
     demo.add_population_split(time = 1000, derived=tmp, ancestral="anc")
 
 We can visualize the demographic model we created using ``demesdraw``.
 
 .. code-block:: python
+
     g = demo.to_demes()
     demesdraw.tubes(g)
 
@@ -52,6 +56,7 @@ Then, we can simulate the ancestry of a sample of 100 individuals from two subpo
 Here, we will set the recombination rate to 1e-8 and the sequence length to 10 million base pairs.
 
 .. code-block:: python
+
     sample_size = 10
     samples = {f"P{i}": sample_size for i in range(2)}
     anc = msp.sim_ancestry(samples=samples, demography=demo, recombination_rate=1e-8, sequence_length=1e8, random_seed = 12)
@@ -60,6 +65,7 @@ Here, we will set the recombination rate to 1e-8 and the sequence length to 10 m
 Lastly, we can compute the allele frequency spectrum (AFS) from the simulated data.
 
 .. code-block:: python
+
     afs_samples = {f"P{i}": sample_size*2 for i in range(2)}
     afs = ts.allele_frequency_spectrum(sample_sets=[ts.samples([1]), ts.samples([2])], span_normalise=False)
 
@@ -74,6 +80,7 @@ We will be inferencing the population sizes, split times, and migration rates.
 To visually inspect the how the likelihood changes and whether the method is reliable, we create a function to plot the results.
 
 .. code-block:: python
+
     from jax import vmap, lax
 
     def plot_sfs_likelihood(demo, paths, vec_values, afs, afs_samples, theta=None, sequence_length=None):
@@ -116,6 +123,7 @@ We first try to inference the population size of ancestral population "anc".
 With initial guess of 4000, we search for the maximum likelihood estimate over a grid of values ranging from 4000 to 6000.
 
 .. code-block:: python
+
     import jax.numpy as jnp
     paths = {
         frozenset({('demes', 0, 'epochs', 0, 'end_size'),
@@ -135,6 +143,7 @@ Then, we try to inference the population size of one of the descendant populatio
 Again, with initial guess of 4000, we search for the maximum likelihood estimate over a grid of values ranging from 4000 to 6000.
 
 .. code-block:: python
+
     import jax.numpy as jnp
     paths = {
         frozenset({('demes', 1, 'epochs', 0, 'end_size'),
@@ -152,6 +161,7 @@ Negative Log-Likelihood is optimized at around 5500, which, again, is pretty clo
 Then, we try to inference the split time between the ancestral population and the two descendant populations.
 
 .. code-block:: python
+
     import jax.numpy as jnp
     paths = {
         frozenset({('demes', 0, 'epochs', 0, 'end_time'),
@@ -172,6 +182,7 @@ Negative Log-Likelihood is optimized at around 1000. Our population split is suc
 Finally, we try to inference the migration rate between the two descendant populations.
 
 .. code-block:: python
+    
     import jax.numpy as jnp
     paths = {
         ('migrations', 0, 'rate'): 4000.,
