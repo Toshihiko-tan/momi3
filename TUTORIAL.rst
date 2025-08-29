@@ -47,7 +47,7 @@ We can visualize the demographic model using ``demesdraw``:
     g = demo.to_demes()
     demesdraw.tubes(g)
 
-.. image:: images/demo.png
+.. image:: /docs/images/demo.png
    :alt: Demographic model visualization
    :align: center
 
@@ -144,7 +144,7 @@ With an initial guess of 4000, we evaluate the likelihood over a grid of values 
     vec_values = jnp.linspace(4000, 6000, 50)
     result = plot_sfs_likelihood(g, paths, vec_values, afs, afs_samples)
 
-.. image:: images/pop_size.png
+.. image:: /docs/images/pop_size.png
    :alt: Ancestral population size inference
    :align: center
 
@@ -168,7 +168,7 @@ Again, starting from 4000, we search over values between 4000 and 6000:
     vec_values = jnp.linspace(4000, 6000, 50)
     result = plot_sfs_likelihood(g, paths, vec_values, afs, afs_samples)
 
-.. image:: images/pop_size2.png
+.. image:: /docs/images/pop_size2.png
    :alt: Descendant population size inference
    :align: center
 
@@ -195,7 +195,7 @@ This parameter is shared across multiple paths (two deme start times, one epoch 
     vec_values = jnp.linspace(500, 1500, 50)
     result = plot_sfs_likelihood(g, paths, vec_values, afs, afs_samples)
 
-.. image:: images/split_time.png
+.. image:: /docs/images/split_time.png
    :alt: Split time inference
    :align: center
 
@@ -216,7 +216,7 @@ Finally, we infer the migration rate between the two descendant populations:
     vec_values = jnp.linspace(0.00005, 0.0002, 10)
     result = plot_sfs_likelihood(g, paths, vec_values, afs, afs_samples)
 
-.. image:: images/migration_rate.png
+.. image:: /docs/images/migration_rate.png
    :alt: Migration rate inference
    :align: center
 
