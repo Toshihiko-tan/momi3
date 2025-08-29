@@ -2,136 +2,186 @@
 Tutorial
 ========
 
-This tutorial demonstrates how to use the ``momi3`` package to perform inference on demographic models.  
-We walk through simulating a population structure, running inference using the sample frequency spectrum (SFS), and interpreting the results.  
+This tutorial demonstrates how to use the ``momi3`` module included in the ``demesinfer`` package to perform inference on demographic models. 
+
+In momi3, the main approach for demographic inference is based on the site frequency spectrum (SFS) of genetic data.
 
 The corresponding Jupyter notebook for this tutorial is available at ``docs/tutorial.ipynb``.
+
+We walk through simulating a population structure, running inference using the sample spectrum (SFS), and interpreting the results.  
 
 Simulation
 ============
 
 We begin by simulating genetic data under a simple demographic model using the ``msprime`` and ``demes`` packages.
-For simplicity, we consider a scenario with two subpopulations (P0 and P1) that split from a common ancestor.
-We assume all populations have constant effective population sizes of 10,000, and the subpopulations exchange migrants at a symmetric migration rate of 0.01.
 
 To get started, import the necessary packages:
 
 .. code-block:: python
-
     import msprime as msp
     import demes
     import demesdraw
 
-Now, define the demographic model using msprime. Below we create a demographic model with three populations: an ancestral population (anc) and two derived populations (P0 and P1).
-Assuming that the ancestral population has an initial size of 10,000, we can add the populations to the demographic model using the ``add_population()`` method.
-Similarly, we can set the initial size of the two derived populations (P0 and P1) to 10,000 each.
-Lastly, we set the symmetric migration rate between the two subpopulations using the ``set_symmetric_migration_rate()`` method.
+For simplicity, we consider a scenario with two subpopulations (P0 and P1) that split from a common ancestor.
+We assume all populations have constant effective population sizes of 5000, and the subpopulations exchange migrants at a symmetric migration rate of 0.0001.
 
 .. code-block:: python
-
     demo = msp.Demography()
-    demo.add_population(initial_size=1e4, name="anc")
-    demo.add_population(initial_size=1e4, name="P0")
-    demo.add_population(initial_size=1e4, name="P1")
-    demo.set_symmetric_migration_rate(populations=("P0", "P1"), rate=0.01)
+    demo.add_population(initial_size = 5000, name = "anc")
+    demo.add_population(initial_size = 5000, name = "P0")
+    demo.add_population(initial_size = 5000, name = "P1")
+    demo.set_symmetric_migration_rate(populations=("P0", "P1"), rate=0.0001)
+    tmp = [f"P{i}" for i in range(2)]
 
 Then, we specify the split time to be 1000 generations between the subpopulations and the ancestral population:
 
 .. code-block:: python
-
-    tmp = [f"P{i}" for i in range(2)]
-    demo.add_population_split(time=1000, derived=tmp, ancestral="anc")
+    demo.add_population_split(time = 1000, derived=tmp, ancestral="anc")
 
 We can visualize the demographic model we created using ``demesdraw``.
 
 .. code-block:: python
-
     g = demo.to_demes()
     demesdraw.tubes(g)
 
-Lastly, we can simulate the ancestry of a sample of 100 individuals from two subpopulations using msprime's ``sim_ancestry()`` function.  
+.. image:: /images/demo.png
+   :alt: Demographic model visualization
+   :align: center
+
+Then, we can simulate the ancestry of a sample of 100 individuals from two subpopulations using msprime's ``sim_ancestry()`` function.  
 Here, we will set the recombination rate to 1e-8 and the sequence length to 10 million base pairs.
 
 .. code-block:: python
-    
-    sample_size = 100
+    sample_size = 10
     samples = {f"P{i}": sample_size for i in range(2)}
-    anc = msp.sim_ancestry(
-        samples=samples,
-        demography=demo,
-        recombination_rate=1e-8,
-        sequence_length=1e7
-    )
-    ts = msp.sim_mutations(anc, rate=1e-8)
+    anc = msp.sim_ancestry(samples=samples, demography=demo, recombination_rate=1e-8, sequence_length=1e8, random_seed = 12)
+    ts = msp.sim_mutations(anc, rate=1e-8, random_seed = 13)
 
-Inference using SFS-based methods
+Lastly, we can compute the allele frequency spectrum (AFS) from the simulated data.
+
+.. code-block:: python
+    afs_samples = {f"P{i}": sample_size*2 for i in range(2)}
+    afs = ts.allele_frequency_spectrum(sample_sets=[ts.samples([1]), ts.samples([2])], span_normalise=False)
+
+Inference using SFS-based methods in momi3
 ============
+Now we create an example of using momi3 to perform demographic inference using the SFS generated from the simulated data.
 
-Now we use momi3 to perform demographic inference using the SFS generated from the simulated data.
+We will be inferencing the population sizes, split times, and migration rates.
 
 **Note**: Inference with large sample sizes may be slow. Consider reducing the number of samples when running locally.
 
-First, import the ``Momi3`` class from the ``momi3`` package.  
-We can then construct the SFS inference object by calling ``Momi3().sfs()`` with the demographic model we created earlier.
-Here, ``g`` is a ``demes``-formatted demographic model we have simulated previously.
+To visually inspect the how the likelihood changes and whether the method is reliable, we create a function to plot the results.
 
 .. code-block:: python
+    from jax import vmap, lax
 
-    from momi3 import Momi3
-    momi_sfs_object = Momi3(g).sfs({'P0': 20, 'P1': 20})
+    def plot_sfs_likelihood(demo, paths, vec_values, afs, afs_samples, theta=None, sequence_length=None):
+        import matplotlib.pyplot as plt
 
-Compute the allele frequency spectrum (AFS) from the simulated tree sequence, then convert it into a joint SFS (JSFS):
+        path_order: List[Var] = list(paths)
+        esfs = ExpectedSFS(demo, num_samples=afs_samples)
+
+        def sfs_loglik(afs, esfs, sequence_length, theta):
+            afs = afs.flatten()[1:-1]
+            esfs = esfs.flatten()[1:-1]
+            
+            if theta:
+                assert(sequence_length)
+                tmp = esfs * sequence_length * theta
+                return jnp.sum(-tmp + xlogy(afs, tmp))
+            else:
+                return jnp.sum(xlogy(afs, esfs/esfs.sum()))
+        
+        def evaluate_at_vec(vec):
+            vec_array = jnp.atleast_1d(vec)
+            params = _vec_to_dict_jax(vec_array, path_order)
+            e1 = esfs(params)
+            return -sfs_loglik(afs, e1, sequence_length, theta)
+
+        results = lax.map(evaluate_at_vec, vec_values)
+
+        plt.figure(figsize=(10, 6))
+        plt.plot(vec_values, results, 'r-', linewidth=2)
+        plt.xlabel("vec value")
+        plt.ylabel("Negative Log-Likelihood")
+        plt.title("SFS Likelihood Landscape")
+        plt.grid(True)
+        plt.show()
+
+        return results
+
+We first try to inference the population size of ancestral population "anc".
+
+With initial guess of 4000, we search for the maximum likelihood estimate over a grid of values ranging from 4000 to 6000.
 
 .. code-block:: python
-
-    from momi3.jsfs import JSFS
-    import jax
-    afs = ts.allele_frequency_spectrum(
-        sample_sets=[ts.samples([1]), ts.samples([2])],
-        span_normalise=False
-    )
-    jsfs = JSFS.from_dense(afs, ["P0", "P1"])
-
-We focus inference on a single parameter: the starting population size (``start_size``) of the first epoch of the first deme.
-We use ``reparameterize()`` to map the constrained parameter space into an unconstrained one:
-
-.. code-block:: python
-
-    from momi3 import Momi3
-    import numpy as np
-    params = [("demes", 0, "epochs", 0, "start_size")]
-    f, x = momi_sfs_object.reparameterize(list(params))
-    parameters = list(x.keys())
-
-We now evaluate the likelihood over a range of values for ``start_size`` to visualize how the likelihood varies with this parameter.
-Here, we will sweep the parameter from 5000 to 20000 by creating 100 intervals with the ``linspace()`` function. You can adjust the range and step size as needed.
-
-.. code-block:: python
-
-    from jax import vmap
     import jax.numpy as jnp
-    x_values = jnp.linspace(5000, 20000, 100)
+    paths = {
+        frozenset({('demes', 0, 'epochs', 0, 'end_size'),
+                ('demes', 0, 'epochs', 0, 'start_size')}): 4000.,
+    }
+    vec_values = jnp.linspace(4000, 6000, 50)
+    result = plot_sfs_likelihood(g, paths, vec_values, afs, afs_samples)
 
-    def compute_likelihood(val):
-        updated_x = x.copy()
-        updated_x[parameters[0]] = val
-        params = updated_x
-        return momi_sfs_object.loglik(params, jsfs)
+.. image:: /images/pop_size.png
+   :alt: Demographic model visualization
+   :align: center
 
-    likelihoods = vmap(compute_likelihood)(x_values)
+Negative Log-Likelihood is optimized at around 4600, which is pretty close to the true value of 5000.
 
-Lastly, we can plot the log-likelihood values against the start_size parameter values to visualize the results.
+Then, we try to inference the population size of one of the descendant populations "P0".
+
+Again, with initial guess of 4000, we search for the maximum likelihood estimate over a grid of values ranging from 4000 to 6000.
 
 .. code-block:: python
+    import jax.numpy as jnp
+    paths = {
+        frozenset({('demes', 1, 'epochs', 0, 'end_size'),
+                ('demes', 1, 'epochs', 0, 'start_size')}): 4000.,
+    }
+    vec_values = jnp.linspace(4000, 6000, 50)
+    result = plot_sfs_likelihood(g, paths, vec_values, afs, afs_samples)
 
-    import matplotlib.pyplot as plt
-    plt.figure(figsize=(10, 6))
-    plt.plot(x_values, likelihoods, label='Likelihood')
-    plt.xlabel('x (parameter values)')
-    plt.ylabel('Debugger Likelihood')
-    plt.title('Debugger likelihood over parameters')
-    plt.legend()
-    plt.grid(True)
-    plt.show()
+.. image:: /images/pop_size2.png
+   :alt: Demographic model visualization2
+   :align: center
 
-This plot should reveal a peak in the log-likelihood curve around the true value of ``start_size = 10000``, validating the accuracy of the inference pipeline.
+Negative Log-Likelihood is optimized at around 5500, which, again, is pretty close to the true value of 5000.
+
+Then, we try to inference the split time between the ancestral population and the two descendant populations.
+
+.. code-block:: python
+    import jax.numpy as jnp
+    paths = {
+        frozenset({('demes', 0, 'epochs', 0, 'end_time'),
+                ('demes', 1, 'start_time'),
+                ('demes', 2, 'start_time'),
+                ('migrations', 0, 'start_time'),
+                ('migrations', 1, 'start_time')}): 4000.,
+    }
+    vec_values = jnp.linspace(500, 1500, 50)
+    result = plot_sfs_likelihood(g, paths, vec_values, afs, afs_samples)
+
+.. image:: /images/split_time.png
+   :alt: Split Time
+   :align: center
+
+Negative Log-Likelihood is optimized at around 1000. Our population split is successfully inferred!
+
+Finally, we try to inference the migration rate between the two descendant populations.
+
+.. code-block:: python
+    import jax.numpy as jnp
+    paths = {
+        ('migrations', 0, 'rate'): 4000.,
+    }
+
+    vec_values = jnp.linspace(0.00005, 0.0002, 10)
+    result = plot_sfs_likelihood(g, paths, vec_values, afs, afs_samples)
+
+.. image:: /images/migration_rate.png
+   :alt: Migration Rate
+   :align: center
+
+Negative Log-Likelihood is optimized at around 0.00013, which, again, is pretty close to the true value of 0.0001.

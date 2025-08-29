@@ -360,7 +360,7 @@ class _Momi3Sfs(_Momi3Base):
         etbls = jax.tree.map(lambda e: e[:-3], etbls).clip(1e-10)
 
         if folded:
-            etbls = jax.tree_map(lambda e: e.reshape(-1, 2).sum(axis=1), etbls)
+            etbls = jax.tree.map(lambda e: e.reshape(-1, 2).sum(axis=1), etbls)
 
         return etbls, tau
 
