@@ -47,7 +47,9 @@ view the exact model with the following:
 
     g.as_dict()
 
-These dictionary paths is a structured way to represent a model and the ordering of all of its demographic events. In addition, we can visualize the demographic model using ``demesdraw``:
+Note: edit this to display the dictionary output
+
+These dictionary paths are a structured way to represent a model and the ordering of all of its demographic events. In addition, we can visualize the demographic model using ``demesdraw``:
 
 .. code-block:: python
 
@@ -58,8 +60,8 @@ These dictionary paths is a structured way to represent a model and the ordering
    :alt: Demographic model visualization
    :align: center
 
-Next, we simulate the ancestry of 100 individuals sampled from the two subpopulations using ``msprime.sim_ancestry()``.  
-We use a recombination rate of 1e-8 and a sequence length of 10 million base pairs, with fixed random seeds for reproducibility.
+Next, we simulate the ancestry of 20 individuals sampled from the two subpopulations using ``msprime.sim_ancestry()``.  
+We use a mutation and recombination rate of 1e-8 and a sequence length of 10 million base pairs, with fixed random seeds for reproducibility.
 
 .. code-block:: python
 
@@ -86,21 +88,25 @@ For more details regarding the construction of demographic models using msprime.
 Demographic parameters in momi3
 ==========================================
 
-A convenient feature of momi3 is its treatment of demographic model parameterization. It automatically translates a a given demographic model (e.g., IWM, exponential growth, stepping stone,population split with migration) into the precise set of numerical constraints that satisfy model restriction such as those governing time intervals, population sizes, and admixture events. This eliminates the tedious and challenging manual derivation of constraints, making constrained optimization both more accessible.
+A convenient feature of momi3 is its treatment of demographic model parameterization. It automatically translates a given demographic model (e.g., IWM, exponential growth, stepping stone, population split with migration) into the precise set of numerical constraints that satisfy model restrictions, such as those governing time intervals, population sizes, and admixture events. This eliminates the tedious and challenging manual derivation of constraints, making constrained optimization both more accessible.
 
 To see all parameters associated to this model:
+
 .. code-block:: python
     from demesinfer.constr import constraints_for, EventTree
     et = EventTree(g)
     et.variables
 
-In this specific example: (create bullet points)
-Bullet 1: Any parameters within the same frozenset object are treated as a single parameter, which implicitly constrains them all to be equal. The first three frozenset objects represent the constant population sizes for anc, P0, and P1, respectively. Because the population size is constant over the epoch, the start and end size are treated as a single parameter. 
-Bullet 2: ('migrations', 0, 'rate') and ('migrations', 1, 'rate') are the respective assymetric migration parameters between populations P0 and P1.
-Bullet 3: Explain what ('demes', 1, 'proportions', 0) ('demes', 2, 'proportions', 0)
-Bullet 4: The last two frozenset objects constrain the timing of events. Following the construction of the model, the start times of subpopulation and migration events must always match the end time of the ancestral population. The end time of subpopulations and migrations must also align together.
+In this specific example, any parameters within the same ``frozenset`` object are treated as a single parameter, which implicitly constrains them all to be equal. The first three frozenset objects represent the constant population sizes for anc, P0, and P1, respectively. Because the population size is constant over the epoch, the start and end size are treated as a single parameter. 
 
+('migrations', 0, 'rate') and ('migrations', 1, 'rate') are the respective assymetric migration parameters between populations P0 and P1.
+
+The last two frozenset objects constrain the timing of events. Following the construction of the model, the start times of subpopulation and migration events must always match the end time of the ancestral population. The last ``frozenset`` constrains the end time of subpopulations and migrations to align together.
+
+Demographic constraints in momi3
+==========================================
 Suppose you were interested in inferring 3 parameters - the ancestral population size, rate of migration from P0 to P1, and the time of divergence. To output the associated linear constraints:
+
 .. code-block:: python
     constraints_for(et, *[frozenset({('demes', 0, 'epochs', 0, 'end_size'),
             ('demes', 0, 'epochs', 0, 'start_size')}), ('migrations', 0, 'rate'), frozenset({('demes', 0, 'epochs', 0, 'end_time'),
@@ -109,9 +115,11 @@ Suppose you were interested in inferring 3 parameters - the ancestral population
             ('migrations', 0, 'start_time'),
             ('migrations', 1, 'start_time')})])
 
-We see the sets associated to A, b, A', b' for the linear equality and inequality constraints (Ax = b, A'x <= b') required by the model. The constraint ordering is identical to the ordering of the input list. In this specific example, the ancestral population size must be nonnegative, migration rate staas within [0, 1], and time of divergence is nonnegative.
+We see the ``eq`` and ``ineq`` sets associated to A, b, A', b' for the linear equality and inequality constraints (Ax = b, A'x <= b'). The constraint ordering is identical to the ordering of the input list. In this specific example, the ancestral population size must be nonnegative, migration rate stays within the bounds [0, 1], and time of divergence is nonnegative.
 
-To do: Mention to people that by default migration is asymmetric. Show people how they can add in their own custom constraints. For example, how do we edit the output of constraints_for to ensure that the migration rates are symmetric.
+To do: Mention to people that by default migration is asymmetric. Show people how they can add in their own custom constraints. For example, show how do we edit the output of constraints_for to ensure that the migration rates are symmetric.
+
+The ``constraints_for`` function outputs the linear constraints required for optimizing a select set of parameters. During this process, any parameters not explicitly selected remain fixed at their initial values, ensuring the core model structure is preserved.
 
 Inference using SFS-based methods in momi3
 ==========================================
