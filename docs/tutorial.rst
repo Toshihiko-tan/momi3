@@ -93,6 +93,7 @@ A convenient feature of momi3 is its treatment of demographic model parameteriza
 To see all parameters associated to this model:
 
 .. code-block:: python
+
     from demesinfer.constr import constraints_for, EventTree
     et = EventTree(g)
     et.variables
@@ -108,6 +109,7 @@ Demographic constraints in momi3
 Suppose you were interested in inferring 3 parameters - the ancestral population size, rate of migration from P0 to P1, and the time of divergence. To output the associated linear constraints:
 
 .. code-block:: python
+
     constraints_for(et, *[frozenset({('demes', 0, 'epochs', 0, 'end_size'),
             ('demes', 0, 'epochs', 0, 'start_size')}), ('migrations', 0, 'rate'), frozenset({('demes', 0, 'epochs', 0, 'end_time'),
             ('demes', 1, 'start_time'),
