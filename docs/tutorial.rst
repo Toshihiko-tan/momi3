@@ -40,7 +40,14 @@ We set the split time between the subpopulations and their ancestor to 1000 gene
 
     demo.add_population_split(time=1000, derived=tmp, ancestral="anc")
 
-We can visualize the demographic model using ``demesdraw``:
+To inspect, debug, and understand the demographic model one's created with msprime.Demography(), one can 
+view the exact model with the following:
+
+.. code-block:: python
+
+    g.as_dict()
+
+These dictionary paths is a structured way to represent a model and the ordering of all of its demographic events. In addition, we can visualize the demographic model using ``demesdraw``:
 
 .. code-block:: python
 
@@ -74,8 +81,42 @@ Lastly, we compute the allele frequency spectrum (AFS) from the simulated data:
         span_normalise=False,
     )
 
+For more details regarding the construction of demographic models using msprime.Demography(), please refer to: https://tskit.dev/msprime/docs/stable/demography.html
+
+Demographic parameters in momi3
+==========================================
+
+A convenient feature of momi3 is its treatment of demographic model parameterization. It automatically translates a a given demographic model (e.g., IWM, exponential growth, stepping stone,population split with migration) into the precise set of numerical constraints that satisfy model restriction such as those governing time intervals, population sizes, and admixture events. This eliminates the tedious and challenging manual derivation of constraints, making constrained optimization both more accessible.
+
+To see all parameters associated to this model:
+.. code-block:: python
+    from demesinfer.constr import constraints_for, EventTree
+    et = EventTree(g)
+    et.variables
+
+In this specific example: (create bullet points)
+Bullet 1: Any parameters within the same frozenset object are treated as a single parameter, which implicitly constrains them all to be equal. The first three frozenset objects represent the constant population sizes for anc, P0, and P1, respectively. Because the population size is constant over the epoch, the start and end size are treated as a single parameter. 
+Bullet 2: ('migrations', 0, 'rate') and ('migrations', 1, 'rate') are the respective assymetric migration parameters between populations P0 and P1.
+Bullet 3: Explain what ('demes', 1, 'proportions', 0) ('demes', 2, 'proportions', 0)
+Bullet 4: The last two frozenset objects constrain the timing of events. Following the construction of the model, the start times of subpopulation and migration events must always match the end time of the ancestral population. The end time of subpopulations and migrations must also align together.
+
+Suppose you were interested in inferring 3 parameters - the ancestral population size, rate of migration from P0 to P1, and the time of divergence. To output the associated linear constraints:
+.. code-block:: python
+    constraints_for(et, *[frozenset({('demes', 0, 'epochs', 0, 'end_size'),
+            ('demes', 0, 'epochs', 0, 'start_size')}), ('migrations', 0, 'rate'), frozenset({('demes', 0, 'epochs', 0, 'end_time'),
+            ('demes', 1, 'start_time'),
+            ('demes', 2, 'start_time'),
+            ('migrations', 0, 'start_time'),
+            ('migrations', 1, 'start_time')})])
+
+We see the sets associated to A, b, A', b' for the linear equality and inequality constraints (Ax = b, A'x <= b') required by the model. The constraint ordering is identical to the ordering of the input list. In this specific example, the ancestral population size must be nonnegative, migration rate staas within [0, 1], and time of divergence is nonnegative.
+
+To do: Mention to people that by default migration is asymmetric. Show people how they can add in their own custom constraints. For example, how do we edit the output of constraints_for to ensure that the migration rates are symmetric.
+
 Inference using SFS-based methods in momi3
 ==========================================
+
+To do: Write up an example that literally just outputs the loglik value as well as its gradient for any parameter just to show people how to call on it. Then we can proceed to plot the likelihoods and whatnot.
 
 Now we demonstrate how to use momi3 to perform demographic inference from the simulated SFS.
 
@@ -221,3 +262,89 @@ Finally, we infer the migration rate between the two descendant populations:
    :align: center
 
 The negative log-likelihood is minimized around 0.00013, close to the true value of 0.0001.
+
+
+Population size change example
+==========================================
+To do: I will leave this simulation example here. We will just show people what the constraints_for looks like and how to interpret it. The user can do figure out how to do optimization themselves. Do not try to simulate this code, it takes like 10+ minutes to run. 
+
+.. code-block:: python
+import msprime as msp
+import demes
+import demesdraw
+import numpy as np
+
+# Create demography object
+demo = msp.Demography()
+
+# Add populations
+demo.add_population(initial_size=4000, name="anc")
+demo.add_population(initial_size=500, name="P0", growth_rate=-np.log(3000 / 500)/66)
+demo.add_population(initial_size=500, name="P1", growth_rate=-np.log(3000 / 500)/66)
+demo.add_population(initial_size=100, name="P2", growth_rate=-np.log(3000 / 100)/66)
+
+# Set initial migration rate
+demo.set_symmetric_migration_rate(populations=("P0", "P1"), rate=0.0001)
+demo.set_symmetric_migration_rate(populations=("P1", "P2"), rate=0.0001)
+
+
+# population growth at 500 generations
+demo.add_population_parameters_change(
+    time=65,
+    initial_size=3000,  # Bottleneck: reduce to 1000 individuals
+    population="P0",
+    growth_rate=0
+)
+demo.add_population_parameters_change(
+    time=65,
+    initial_size=3000,  # Bottleneck: reduce to 1000 individuals
+    population="P1",
+    growth_rate=0
+)
+demo.add_population_parameters_change(
+    time=66,
+    initial_size=3000,  # Bottleneck: reduce to 1000 individuals
+    population="P2",
+    growth_rate=0
+)
+
+# Migration rate change changed to 0.001 AFTER 500 generation (going into the past)
+demo.add_migration_rate_change(
+    time=66,
+    rate=0.0005, 
+    source="P0",
+    dest="P1"
+)
+demo.add_migration_rate_change(
+    time=66,
+    rate=0.0005, 
+    source="P1",
+    dest="P0"
+)
+demo.add_migration_rate_change(
+    time=66,
+    rate=0.0005, 
+    source="P1",
+    dest="P2"
+)
+demo.add_migration_rate_change(
+    time=66,
+    rate=0.0005, 
+    source="P2",
+    dest="P1"
+)
+
+# THEN add the older events (population split at 1000)
+demo.add_population_split(time=5000, derived=["P0", "P1", "P2"], ancestral="anc")
+
+# Visualize the demography
+g = demo.to_demes()
+demesdraw.tubes(g, log_time=True)
+
+To do: explain that one of the times being 65 generations was very intentional in order to split off variables from the same frozenset object. 
+
+.. code-block:: python
+from demesinfer.constr import constraints_for, EventTree
+demo = g
+et = EventTree(demo)
+et.variables
