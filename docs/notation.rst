@@ -21,11 +21,15 @@ To better understand this structure, consider the following example model:
     tmp = [f"P{i}" for i in range(2)]
     demo.add_population_split(time=1000, derived=tmp, ancestral="anc")
 
+Note: This code can be cleaned up, there's some unnecessary lines like tmp. Shorten this code.
+
 To inspect, debug, and understand the demographic model's data structure, one can view the exact model with the following:
 
 .. code-block:: python
 
     g.as_dict()
+
+Note: edit this to display the dictionary output
 
 This dictionary contains all demographic parameters in a hierarchical format, and a path corresponds to the specific sequence of keys needed to access any particular parameter within this nested structure.
 
