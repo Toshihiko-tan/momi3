@@ -40,16 +40,7 @@ We set the split time between the subpopulations and their ancestor to 1000 gene
 
     demo.add_population_split(time=1000, derived=tmp, ancestral="anc")
 
-To inspect, debug, and understand the demographic model one's created with msprime.Demography(), one can 
-view the exact model with the following:
-
-.. code-block:: python
-
-    g.as_dict()
-
-Note: edit this to display the dictionary output
-
-These dictionary paths are a structured way to represent a model and the ordering of all of its demographic events. In addition, we can visualize the demographic model using ``demesdraw``:
+We can visualize the demographic model using ``demesdraw``:
 
 .. code-block:: python
 
