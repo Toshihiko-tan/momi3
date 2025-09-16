@@ -126,13 +126,15 @@ Note: Teach people how to get rid of frozensets. You must initialize the populat
 Inference using SFS-based methods in momi3
 ------------------------------------------
 
-To do: Write up an example that literally just outputs the loglik value as well as its gradient for any parameter just to show people how to call on it. Then we can proceed to plot the likelihoods and whatnot.
+Note: Write up an example that literally just outputs the loglik value as well as its gradient for any parameter just to show people how to call on it. Then we can proceed to plot the likelihoods and whatnot.
 
 Now we demonstrate how to use momi3 to perform demographic inference from the simulated SFS.
 
 We will infer three types of parameters: population sizes, split times, and migration rates.
 
 **Note**: Inference with large sample sizes may be slow. Consider reducing the number of samples when running locally.
+
+Note: We should probably give people a rough estimate of runtimes eventually. This can be done at a later time. Leave the note here for future reference.
 
 To visually inspect how the likelihood changes (and assess reliability), we define a helper function to plot the results:
 
@@ -273,6 +275,7 @@ Finally, we infer the migration rate between the two descendant populations:
 
 The negative log-likelihood is minimized around 0.00013, close to the true value of 0.0001.
 
+Note: Give one example of running the Poisson likelihood where we pass the mutation rate and sequence length into the likelihood.
 
 Population size change example
 ==========================================
@@ -351,10 +354,13 @@ To do: I will leave this simulation example here. We will just show people what 
     g = demo.to_demes()
     demesdraw.tubes(g, log_time=True)
 
-To do: explain that one of the times being 65 generations was very intentional in order to split off variables from the same frozenset object. 
+Note: explain that one of the times being 65 generations was very intentional in order to split off variables from the same frozenset object. 
 
 .. code-block:: python
     from demesinfer.constr import constraints_for, EventTree
     demo = g
     et = EventTree(demo)
     et.variables
+
+Admixture example
+==========================================
