@@ -282,6 +282,7 @@ Population size change example
 To do: I will leave this simulation example here. We will just show people what the constraints_for looks like and how to interpret it. The user can do figure out how to do optimization themselves. Do not try to simulate this code, it takes like 10+ minutes to run. 
 
 .. code-block:: python
+
     import msprime as msp
     import demes
     import demesdraw
@@ -357,6 +358,7 @@ To do: I will leave this simulation example here. We will just show people what 
 Note: explain that one of the times being 65 generations was very intentional in order to split off variables from the same frozenset object. 
 
 .. code-block:: python
+
     from demesinfer.constr import constraints_for, EventTree
     demo = g
     et = EventTree(demo)
@@ -364,3 +366,29 @@ Note: explain that one of the times being 65 generations was very intentional in
 
 Admixture example
 ==========================================
+
+.. code-block:: python
+
+    demo = msp.Demography()
+    demo.add_population(initial_size=5000, name="anc")
+    demo.add_population(initial_size=5000, name="P0")
+    demo.add_population(initial_size=5000, name="P1")
+    demo.set_symmetric_migration_rate(populations=("P0", "P1"), rate=0.0001)
+    tmp = [f"P{i}" for i in range(2)]
+    
+    demography = msp.Demography()
+    demography.add_population(name="P0", initial_size=5000)
+    demography.add_population(name="P1", initial_size=5000)
+    demography.add_population(name="ADMIX", initial_size=1000)
+    demography.add_population(name="anc", initial_size=5000)
+    demography.add_admixture(
+        time=500, derived="ADMIX", ancestral=["P0", "P1"], proportions=[0.4, 0.6])
+    demography.add_population_split(time=1000, derived=["P0", "P1"], ancestral="anc")
+    g = demography.to_demes()
+    demesdraw.tubes(g)
+
+We modify the simple IWM example to have 4 populations, one ancestral population **anc** and three contemporary populations P0, P1, and ADMIX. We added an admixture event where ADMIX is derived from P0 and P1 500 generations ago, and then P0 and P1 merge into the ancestral population at 1000 generations. 
+
+What an admixture events means is that at 500 generations going backwards in time, all the lineages that are in ADMIX will move to P0 with probability 0.4 and to P1 with probability 0.6. After 500 generations, the ADMIX population will be **inactive**. To see how this changes the parameters and constraints in the model observe:
+
+Note: Please finish showing all the parameters and just the constraint for porportions, there's no need to do anything more than that. 
