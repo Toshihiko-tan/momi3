@@ -65,8 +65,11 @@ Using a ``frozenset`` means these paths are **enforced to take the same value** 
 
 **Example:**
 
-In a simple IWM model with three populations (each with one epoch), the starting time of the two descendant populations and the ending time of the ancestral population should be equal.  
-This can be represented as a single parameter:
+In a simple stepping stone model with three populations (each represented with one epoch), the starting time of the three descendant populations, the ending time of the ancestral population should be equal, and the starting migration must be equal.  
+
+Note: Give an example code of actually constructing this in msprime with the demography drawn. And against, emphasize that a reader can go explore g.as_dict() on their own if they wish to see how the data is structured as a dictionary.
+
+For the appropriate model constraints when optimizing, we represent these as a single parameter:
 
 .. code-block:: python
 
