@@ -11,6 +11,7 @@ A **path** is a tuple of strings and integers that uniquely identifies a single 
 To better understand this structure, consider the following example model:
 
 .. code-block:: python
+
     import msprime as msp
     demo = msp.Demography()
     demo.add_population(initial_size=5000, name="anc")
@@ -23,6 +24,7 @@ To better understand this structure, consider the following example model:
 To inspect, debug, and understand the demographic model's data structure, one can view the exact model with the following:
 
 .. code-block:: python
+
     g.as_dict()
 
 This dictionary contains all demographic parameters in a hierarchical format, and a path corresponds to the specific sequence of keys needed to access any particular parameter within this nested structure.
