@@ -89,11 +89,15 @@ To see all parameters associated to this model:
     et = EventTree(g)
     et.variables
 
+Note: Please show the display of this code chunk. Also, please write an explanation of what the "proportions" parameter is. 
+
 To reiterate and emphasize our ''Notation Section'', in this specific example, any parameters within the same ``frozenset`` object are treated as a single parameter, which implicitly constrains them all to be equal. The first three frozenset objects represent the constant population sizes for anc, P0, and P1, respectively. Because the population size is constant over the epoch, the start and end size are treated as a single parameter. 
 
-('migrations', 0, 'rate') and ('migrations', 1, 'rate') are the respective assymetric migration parameters between populations P0 and P1.
+('migrations', 0, 'rate') and ('migrations', 1, 'rate') are the respective assymetric migration parameters between populations P0 and P1. By default they will be treated as assymetric, one can edit the constraints to enforce symmetry and constrain the optimization to treat the two directions of migration as a single parameter. (See section below on editing constraints)
 
-The last two frozenset objects constrain the timing of events. Following the construction of the model, the start times of subpopulation and migration events must always match the end time of the ancestral population. The last ``frozenset`` constrains the end time of subpopulations and migrations to align together.
+Note: Please write up a separate section teaching people how they can edit the output of the constraints to whatever they desire. A perfect example is adding a symmetry constraint on migration.
+
+The last two frozenset objects constrain the timing of events. Following the construction of the model, the start times of subpopulation and migration events must always match the end time of the ancestral population. The last ``frozenset`` constrains the end time of subpopulations and the end time migrations to align together.
 
 Demographic constraints in momi3
 -------------------------------
@@ -110,9 +114,14 @@ Suppose you were interested in inferring 3 parameters - the ancestral population
 
 We see the ``eq`` and ``ineq`` sets associated to A, b, A', b' for the linear equality and inequality constraints (Ax = b, A'x <= b'). The constraint ordering is identical to the ordering of the input list. In this specific example, the ancestral population size must be nonnegative, migration rate stays within the bounds [0, 1], and time of divergence is nonnegative.
 
-To do: Mention to people that by default migration is asymmetric. Show people how they can add in their own custom constraints. For example, show how do we edit the output of constraints_for to ensure that the migration rates are symmetric.
-
 The ``constraints_for`` function outputs the linear constraints required for optimizing a select set of parameters. During this process, any parameters not explicitly selected remain fixed at their initial values, ensuring the core model structure is preserved.
+
+To do: Write up a new section to show people how they can add in their own custom constraints. For example, show how do we edit the output of constraints_for to ensure that the migration rates are symmetric.
+
+Modifying the constraints:
+------------------------------------------
+
+Note: Teach people how to get rid of frozensets. You must initialize the population sizes differently etc, like make the population constant growth. Show an example of this in addition to the symmetric migration thing. 
 
 Inference using SFS-based methods in momi3
 ------------------------------------------
