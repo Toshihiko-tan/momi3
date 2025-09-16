@@ -55,6 +55,7 @@ Migration rate between two populations in a simple IWM model:
 
       ("migrations", 0, "rate")
 
+For more details regarding the construction of demographic models, please take a look at the tutorial.
 
 Parameters
 ----------
