@@ -6,10 +6,26 @@ Demesinfer (and the ``momi3`` module built on top of it) uses the following nota
 Paths
 -----
 
-A **path** is a tuple of strings and integers that uniquely identifies a single parameter of the population history.  
-Examples include population sizes, split times, and migration rates.
+A **path** is a tuple of strings and integers that uniquely identifies a single parameter of the population history. These paths correspond to the nested dictionary structure used by msprime's Demography class and follow the same notation as the ''demes'' package.
 
-We follow the notation used in the ``demes`` package.
+To better understand this structure, consider the following example model:
+
+.. code-block:: python
+    import msprime as msp
+    demo = msp.Demography()
+    demo.add_population(initial_size=5000, name="anc")
+    demo.add_population(initial_size=5000, name="P0")
+    demo.add_population(initial_size=5000, name="P1")
+    demo.set_symmetric_migration_rate(populations=("P0", "P1"), rate=0.0001)
+    tmp = [f"P{i}" for i in range(2)]
+    demo.add_population_split(time=1000, derived=tmp, ancestral="anc")
+
+To inspect, debug, and understand the demographic model's data structure, one can view the exact model with the following:
+
+.. code-block:: python
+    g.as_dict()
+
+This dictionary contains all demographic parameters in a hierarchical format, and a path corresponds to the specific sequence of keys needed to access any particular parameter within this nested structure.
 
 **Examples:**
 
