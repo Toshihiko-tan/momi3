@@ -34,7 +34,9 @@ momi3
 
 momi (short for MOran Models for Inference) is a Python package for computing the expected sample frequency spectrum (SFS)—a key summary statistic in population genetics—and using it to infer demographic history.
 
-This third version is a complete rewrite of the original momi and momi2 packages. It introduces several major improvements, including support for IICR-based (inverse instantaneous coalescence rate) inference methods, greater flexibility in model specification, and enhanced performance and scalability.
+This third version is a complete rewrite of the original momi and momi2 packages. It introduces several major improvements, including greater flexibility in model specification and enhanced performance and scalability.
+
+Additionally, momi3 is now being built as an important part of the demesinfer package, which is an even more comprehensive package for demographic inference. 
 
 For installation instructions, a tutorial, and API reference, please refer to the documentation.
 

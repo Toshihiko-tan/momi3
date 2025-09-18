@@ -5,7 +5,7 @@ This tutorial demonstrates how to use the ``momi3`` module (part of the ``demesi
 
 In momi3, the main approach for demographic inference is based on the site frequency spectrum (SFS) of genetic data.
 
-The corresponding Jupyter notebook for this tutorial is available at ``docs/tutorial.ipynb``.
+The corresponding Jupyter notebook for this tutorial is available at ``docs/momi3_tutorial.ipynb``.
 
 We will walk through simulating a population structure, running inference using the SFS, and interpreting the results.  
 
@@ -116,9 +116,9 @@ Demes are indexed in the order they were added to the msprime.Demography() objec
 
 To reiterate and emphasize our ''Notation Section'', in this specific example, any parameters within the same ``frozenset`` object are treated as a single parameter, which implicitly constrains them all to be equal. The first three frozenset objects represent the constant population sizes for anc, P0, and P1, respectively. Because the population size is constant over the epoch, the start and end size are treated as a single parameter. 
 
-('migrations', 0, 'rate') and ('migrations', 1, 'rate') are the respective assymetric migration parameters between populations P0 and P1. By default they will be treated as assymetric, one can edit the constraints to enforce symmetry and constrain the optimization to treat the two directions of migration as a single parameter. (See section below on editing constraints)
+``('migrations', 0, 'rate')`` and ``('migrations', 1, 'rate')`` are the respective assymetric migration parameters between populations P0 and P1. By default they will be treated as assymetric, one can edit the constraints to enforce symmetry and constrain the optimization to treat the two directions of migration as a single parameter. (See section below on editing constraints)
 
-Proportion parameters like ('demes', 1, 'proportions', 0) and ('demes', 2, 'proportions', 0) describe admixture or pulse events when a population is formed from multiple ancestors. In this simple IWM model, there are no admixture events, so they are trivial in this context (effectively fixed and unused), but still appear for consistency with the general framework.
+Proportion parameters like ``('demes', 1, 'proportions', 0)`` and ``('demes', 2, 'proportions', 0)`` describe admixture or pulse events when a population is formed from multiple ancestors. In this simple IWM model, there are no admixture events, so they are trivial in this context (effectively fixed and unused), but still appear for consistency with the general framework.
 
 The last two frozenset objects constrain the timing of events. Following the construction of the model, the start times of subpopulation and migration events must always match the end time of the ancestral population. The last ``frozenset`` constrains the end time of subpopulations and the end time migrations to align together.
 
@@ -136,10 +136,13 @@ Suppose you were interested in inferring 3 parameters - the ancestral population
             ('migrations', 1, 'start_time')})])
 
 The output of ``constraints_for`` is a dictionary with two keys:
-- ``"eq"``: linear equality constraints ``(A_eq, b_eq)`` such that ``A_eq @ x = b_eq``.
-- ``"ineq"``: linear inequality constraints ``(A_ineq, b_ineq)`` such that ``A_ineq @ x <= b_ineq``.
+
+``"eq"``: linear equality constraints ``(A_eq, b_eq)`` such that ``A_eq @ x = b_eq``.
+
+``"ineq"``: linear inequality constraints ``(A_ineq, b_ineq)`` such that ``A_ineq @ x <= b_ineq``.
 
 We called constraints_for with parameters ordered as:
+
 - Column 0: ancestral population size
 - Column 1: migration rate from P0 → P1
 - Column 2: split time
