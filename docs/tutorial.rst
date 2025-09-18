@@ -355,7 +355,7 @@ The values themselves don’t mean much in isolation, but they demonstrate how t
 
 In the following examples, we will infer three types of parameters: population sizes, split times, and migration rates.
 
-**Note**: Inference with large sample sizes may be slow. Consider reducing the number of samples when running locally. For reference, in all the examples below, I used a sample size of 10 and ran them locally on a MacBook with an M2 chip. The runtime is usually around 10-15 seconds. Simply bumping this number to 20 results in a 5 minute runtime.
+**Note**: Inference with large sample sizes using SFS may be slow. Consider reducing the number of samples when running locally. For reference, in all the examples below, I used a sample size of 10 and ran them locally on a MacBook with an M2 chip. The runtime is usually around 10-15 seconds. Simply bumping this number to 20 results in a 5 minute runtime.
 
 
 To visually inspect how the likelihood changes (and assess reliability), we define a helper function to plot the results:
@@ -489,14 +489,14 @@ Finally, we infer the migration rate between the two descendant populations:
    :alt: Migration rate inference
    :align: center
 
+The negative log-likelihood is minimized around 0.00013, close to the true value of 0.0001.
+
 Optimization with Poisson Likelihood
 -----------------------------
 
-The negative log-likelihood is minimized around 0.00013, close to the true value of 0.0001.
-
 So far, we have used the multinomial likelihood, which is the default in sfs_loglik when we haven’t provided a mutation rate theta; it conditions on the total number of segregating sites. An alternative is the Poisson likelihood, which models the absolute counts of mutations given the mutation rate theta and the sequence length.
 
-This requires passing mutation rate theta and sequence_length into the likelihood function. These parameters depend on the species and the research itself. The setup is the same as before, but now we explicitly provide these parameters. Let's try to optimize the migration rate again, but using the Poisson likelihood this time.
+This requires passing mutation rate ``theta`` and ``sequence_length`` into the likelihood function. These parameters depend on the species and the research itself. The setup is the same as before, but now we explicitly provide these parameters. Let's try to optimize the migration rate again, but using the Poisson likelihood this time.
 
 .. code-block:: python
 
@@ -609,7 +609,7 @@ We now consider a more complex demographic model that includes population size c
 
 **Note** The choice to use 65 (and 66) generations is intentional. In momi3, the event times that coincide exactly are treated as the same time identity and will be grouped into a single parameter (Check the notation section for more details). That’s useful when events truly share a time, but it can also merge parameters you’d prefer to optimize independently. Offsetting one set of events to 65 generations and the others to 66 keeps them as distinct time variables.
 
-You can inspect the parameters/constraints and see the effect:
+You can inspect the parameters/constraints and see the effect using the same commands as before:
 
 .. code-block:: python
 
@@ -660,8 +660,6 @@ Again, we can visualize the demographic model using ``demesdraw``:
     from demesinfer.constr import constraints_for
 
     et = EventTree(g)
-
-    # Show all parameter entries
     for v in et.variables:
         print(v)
 
