@@ -620,6 +620,11 @@ You can inspect the parameters/constraints and see the effect:
 
 Admixture example
 ==========================================
+Another common demographic scenario of interest is admixture.
+
+Here, we extend the simple IWM example to include four populations: one ancestral population (anc) and three contemporary populations (P0, P1, and ADMIX). We introduce an admixture event in which ADMIX is formed from P0 and P1 500 generations ago. At 1000 generations, P0 and P1 then merge back into the ancestral population.
+
+An admixture event means that, going backwards in time, lineages from ADMIX are probabilistically reassigned to the source populations: in this case, with probability 0.4 to P0 and with probability 0.6 to P1. After the admixture time (500 generations ago), the ADMIX population becomes inactive.
 
 .. code-block:: python
 
@@ -638,13 +643,16 @@ Admixture example
     demography.add_admixture(
         time=500, derived="ADMIX", ancestral=["P0", "P1"], proportions=[0.4, 0.6])
     demography.add_population_split(time=1000, derived=["P0", "P1"], ancestral="anc")
+
+
     g = demography.to_demes()
     demesdraw.tubes(g)
 
+Again, we can visualize the demographic model using ``demesdraw``:
 
-We modify the simple IWM example to have 4 populations, one ancestral population **anc** and three contemporary populations P0, P1, and ADMIX. We added an admixture event where ADMIX is derived from P0 and P1 500 generations ago, and then P0 and P1 merge into the ancestral population at 1000 generations. 
-
-What an admixture event means is that at 500 generations going backwards in time, all the lineages that are in ADMIX will move to P0 with probability 0.4 and to P1 with probability 0.6. After 500 generations, the ADMIX population will be **inactive**. To see how this changes the parameters and constraints in the model observe:
+.. image:: images/pop_admixture.png
+   :alt: Admixture model visualization
+   :align: center
 
 .. code-block:: python
     
@@ -657,7 +665,7 @@ What an admixture event means is that at 500 generations going backwards in time
     for v in et.variables:
         print(v)
 
-The output looks like this:
+This yields:
 
 .. code-block:: python
 
@@ -675,4 +683,4 @@ The output looks like this:
     ('demes', 3, 'epochs', 0, 'end_time')
     ('demes', 3, 'start_time')
 
-In short, the admixture event enriches the parameter space by introducing admixture proportions, and the constraints enforce that they form a proper probability vector.
+In summary, the admixture event expands the parameter space by adding admixture proportions, and the constraints ensure that these proportions form a valid probability distribution.
