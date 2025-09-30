@@ -22,7 +22,7 @@ To get started, import the necessary packages:
     import demes
     import demesdraw
 
-For simplicity, we consider a classic isolation-with-migration (IWM) scenario: two subpopulations (P0 and P1) that split from a common ancestor. All populations are assumed to have constant effective sizes of 5000, and after the split the subpopulations exchange migrants at a symmetric rate of 0.0001.
+For simplicity, we consider a classic isolation-with-migration (IWM) scenario: two subpopulations (P0 and P1) that split from a common ancestor. All populations are assumed to have constant effective sizes of 5000, and after the split the subpopulations exchange migrants at a symmetric rate of 0.0001. We set the split time between the subpopulations and their ancestor to 1000 generations:
 
 .. code-block:: python
 
@@ -31,13 +31,7 @@ For simplicity, we consider a classic isolation-with-migration (IWM) scenario: t
     demo.add_population(initial_size=5000, name="P0")
     demo.add_population(initial_size=5000, name="P1")
     demo.set_symmetric_migration_rate(populations=("P0", "P1"), rate=0.0001)
-    tmp = [f"P{i}" for i in range(2)]
-
-We set the split time between the subpopulations and their ancestor to 1000 generations:
-
-.. code-block:: python
-
-    demo.add_population_split(time=1000, derived=tmp, ancestral="anc")
+    demo.add_population_split(time=1000, derived=[f"P{i}" for i in range(2)], ancestral="anc")
 
 We can visualize the demographic model using ``demesdraw``:
 
@@ -50,7 +44,7 @@ We can visualize the demographic model using ``demesdraw``:
    :alt: Demographic model visualization
    :align: center
 
-Next, we simulate the ancestry of 20 individuals sampled from the two subpopulations using ``msprime.sim_ancestry()``.  
+Next, we simulate the ancestry of 10 diploid individuals sampled from the two subpopulations using ``msprime.sim_ancestry()``.  
 We use a mutation and recombination rate of 1e-8 and a sequence length of 10 million base pairs, with fixed random seeds for reproducibility.
 
 .. code-block:: python
