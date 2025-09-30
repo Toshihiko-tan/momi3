@@ -785,7 +785,7 @@ Final step is to construct the ``ExpectedSFS`` object, define the likelihood, an
         options={
         'gtol': 1e-4,
         'xtol': 1e-4, #default 1e-8
-        'maxiter': 2, #default 1000
+        'maxiter': 200, #default 1000
         'barrier_tol': 1e-4
         }
     )
