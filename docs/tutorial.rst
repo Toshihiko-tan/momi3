@@ -640,3 +640,160 @@ This yields:
     ('demes', 3, 'start_time')
 
 In summary, the admixture event expands the parameter space by adding admixture proportions, and the constraints ensure that these proportions form a valid probability distribution.
+
+Constrained Optimization
+========
+Now we show a workflow for how to do constrained optimization with all the tools we just explored. 
+
+Let us revisit the IWM model:
+
+.. code-block:: python
+
+    demo = msp.Demography()
+    demo.add_population(initial_size=5000, name="anc")
+    demo.add_population(initial_size=5000, name="P0")
+    demo.add_population(initial_size=5000, name="P1")
+    demo.set_symmetric_migration_rate(populations=("P0", "P1"), rate=0.0001)
+    demo.add_population_split(time=1000, derived=[f"P{i}" for i in range(2)], ancestral="anc")
+    
+    sample_size = 10
+    samples = {f"P{i}": sample_size for i in range(2)}
+    anc = msp.sim_ancestry(samples=samples, demography=demo,
+                           recombination_rate=1e-8,
+                           sequence_length=1e8,
+                           random_seed=12)
+    ts = msp.sim_mutations(anc, rate=1e-8, random_seed=13)
+
+    afs_samples = {"P0": sample_size * 2, "P1": sample_size * 2}
+    afs = ts.allele_frequency_spectrum(
+        sample_sets=[ts.samples([1]), ts.samples([2])],
+        span_normalise=False,)
+
+Now that you have everything set up from the simulation, take a look at the parameters you can work with:
+
+.. code-block:: python
+
+    from demesinfer.constr import constraints_for, EventTree
+    from loguru import logger
+    logger.disable("demesinfer")
+    
+    et = EventTree(demo.to_demes())
+    et.variables
+
+Suppose now we wish to optimize the following parameters, their associated values will be the initial guesses in the optimization process:
+
+.. code-block:: python
+
+    paths = {frozenset({('demes', 0, 'epochs', 0, 'end_size'),
+            ('demes', 0, 'epochs', 0, 'start_size')}):3000.,
+        frozenset({('demes', 1, 'epochs', 0, 'end_size'),
+            ('demes', 1, 'epochs', 0, 'start_size')}): 6000.,
+        frozenset({('demes', 2, 'epochs', 0, 'end_size'),
+            ('demes', 2, 'epochs', 0, 'start_size')}): 4000.}
+
+For certain parameters like the rate of migration, that variable needs to be bounded because there always exists a pancmitc model with migration rate 1 that can explain the data equally well. So we have to bound the rate of migration with a pre-specified reasonable range say (0, 0.001). We now create all the associated linear constraints and create ``LinearConstraint`` objects that are necessary for ``scipy.minimize`` for our parameters of interest:
+
+.. code-block:: python
+
+    from typing import Any, Dict, List, Mapping, Optional, Sequence, Set, Tuple
+    import matplotlib.pyplot as plt
+    
+    import jax
+    import jax.numpy as jnp
+    import msprime as msp
+    from scipy.optimize import LinearConstraint, minimize
+    import jax.random as jr
+    from jax import vmap, lax 
+    
+    from demesinfer.constr import EventTree, constraints_for
+    from jax.scipy.special import xlogy
+    from demesinfer.sfs import ExpectedSFS
+    import numpy as np
+    from scipy.optimize import Bounds
+    
+    Path = Tuple[Any, ...]
+    Var = Path | Set[Path]
+    Params = Mapping[Var, float]
+    
+    def _dict_to_vec(d: Params, keys: Sequence[Var]) -> jnp.ndarray:
+        return jnp.asarray([d[k] for k in keys], dtype=jnp.float64)
+    
+    def _vec_to_dict_jax(v: jnp.ndarray, keys: Sequence[Var]) -> Dict[Var, jnp.ndarray]:
+        return {k: v[i] for i, k in enumerate(keys)}
+    
+    def _vec_to_dict(v: jnp.ndarray, keys: Sequence[Var]) -> Dict[Var, float]:
+        return {k: float(v[i]) for i, k in enumerate(keys)}
+    
+    path_order: List[Var] = list(paths)
+    x0 = _dict_to_vec(paths, path_order)
+    et = EventTree(demo.to_demes())
+    
+    def create_bounds(param_list, lower_bound=0.0, upper_bound=0.1):
+        """
+        Create bounds where any tuple parameter with 'migration' in first position is bounded
+        """
+        n_params = len(param_list)
+        lb_list = [-np.inf] * n_params
+        ub_list = [np.inf] * n_params
+        
+        for i, param in enumerate(param_list):
+            if isinstance(param, tuple) and "migration" in str(param[0]):
+                lb_list[i] = lower_bound
+                ub_list[i] = upper_bound
+        
+        return Bounds(lb=lb_list, ub=ub_list)
+    
+    bounds = None
+    if not bounds:
+        bounds = create_bounds(paths)
+    
+    cons = constraints_for(et, *path_order)
+    print(cons)
+    print(bounds)
+    linear_constraints: list[LinearConstraint] = []
+    
+    Aeq, beq = cons["eq"]
+    if Aeq.size:
+        linear_constraints.append(LinearConstraint(Aeq, beq, beq))
+    
+    G, h = cons["ineq"]
+    if G.size:
+        lower = -jnp.inf * jnp.ones_like(h)
+        linear_constraints.append(LinearConstraint(G, lower, h))
+    
+Final step is to construct the ``ExpectedSFS`` object, define the likelihood, and use ``minimize`` with method ``trust-constr`` for constrained optimization. 
+
+.. code-block:: python
+
+    from demesinfer.loglik.sfs_loglik import sfs_loglik
+    esfs = ExpectedSFS(demo.to_demes(), num_samples=afs_samples)
+    
+    @jax.value_and_grad
+    def neg_loglik(vec):
+        params = _vec_to_dict_jax(vec, path_order)
+    
+        e1 = esfs(params)
+        return -sfs_loglik(afs, e1, sequence_length=None, theta=None)
+    
+    res = minimize(
+        fun=lambda x: float(neg_loglik(x)[0]),
+        x0=jnp.asarray(x0),
+        jac=lambda x: jnp.asarray(neg_loglik(x)[1], dtype=float),
+        method="trust-constr",
+        bounds = bounds,
+        constraints=linear_constraints,
+        options={
+        'gtol': 1e-4,
+        'xtol': 1e-4, #default 1e-8
+        'maxiter': 2, #default 1000
+        'barrier_tol': 1e-4
+        }
+    )
+
+To see our final estimates:
+
+.. code-block:: python
+
+    _vec_to_dict(jnp.asarray(res.x), path_order)
+
+This entire pipeline has been conveniently implemented into a single ``fit`` command. Please see the API to see all parameter options and implementation details. We will not be responsible for any updates/errors made to scipy.minimize. 
