@@ -72,7 +72,7 @@ For more details regarding the construction of demographic models using msprime.
 Demographic parameters in momi3
 -------------------------------
 
-A convenient feature of momi3 is its treatment of demographic model parameterization. It automatically translates a given demographic model (e.g., IWM, exponential growth, stepping stone, population split with migration) into the precise set of numerical constraints that satisfy model restrictions, such as those governing time intervals, population sizes, and admixture events. This eliminates the tedious and challenging manual derivation of constraints, making constrained optimization more accessible.
+A convenient feature of momi3 is its treatment of demographic model parameterization. It automatically translates a given demographic model (e.g., IWM, exponential growth, stepping stone) into the precise set of numerical constraints that satisfy model restrictions, such as those governing time intervals, population sizes, and admixture events. This eliminates the tedious and challenging manual derivation of constraints, making constrained optimization more accessible.
 
 In the previous section, we simulated genetic data under an IWM model. We can now examine the full set of parameters associated with this model:
 
@@ -82,7 +82,7 @@ In the previous section, we simulated genetic data under an IWM model. We can no
     et = EventTree(g)
     et.variables
 
-The output is a list of parameters, each entry representing one or more optimizable coordinates. If variables are tied by construction, they appear grouped inside a frozenset:
+The output is a list of parameters, each entry representing one or more optimizable coordinates. If variables are tied by construction of the model, they appear grouped inside a frozenset:
 
 .. code-block:: python
 
@@ -165,7 +165,7 @@ So the output will be:
 
 These constraints ensure biologically meaningful parameter ranges: population sizes and times must be nonnegative, and migration rates must lie within ``[0, 1]``.
 
-In general, ``constraints_for`` automatically generates the linear restrictions required for optimization.
+In general, ``constraints_for`` automatically generates the linear constraints required for optimization.
 
 Modifying the constraints:
 ------------------------------------------
@@ -173,7 +173,7 @@ In addition to the constraints automatically derived from the demographic model,
 
 A common example is the symmetry constraint on migration rates. This reflects the assumption that gene flow between two populations occurs at the same rate in both directions.
 
-To enforce symmetric migration rates, we can add a new equality rule to the constraint matrices returned by constraints_for.
+To enforce symmetric migration rates, we can add a new equality rule to the constraint matrices returned by ``constraints_for``.
 
 This time, let's say we want to infer 3 parameters - the ancestral population size and the symmetric migration rate between P0 and P1. We start by obtaining the default constraints:
 
@@ -245,9 +245,7 @@ Sure enough, the updated constraint now includes the symmetry condition:
     array([0., 0., 1., 0., 1.]))
     }
 
-Constraints can’t and shouldn't be directly removed, since they are derived from the demographic model structure.
-
-However, frozenset parameters disappear when the model no longer forces equality. For example, if a population’s size is not constant across an epoch (e.g., exponential growth), its start_size and end_size become separate variables instead of a single tied frozenset.
+``Frozenset`` parameters cannot be modified or directly removed, since they are derived from the demographic model structure. However, frozenset parameters disappear when the model no longer forces equality. For example, if a population’s size is not constant across an epoch (e.g., exponential growth), its start_size and end_size become separate variables instead of a single tied frozenset.
 
 To show that, let's define a new demographic model where population size changes over time.
 
@@ -258,8 +256,7 @@ To show that, let's define a new demographic model where population size changes
     demo.add_population(name="P0", initial_size=5000, growth_rate=0.002)
     demo.add_population(name="P1", initial_size=5000, growth_rate=0.002)
     demo.set_symmetric_migration_rate(populations=("P0", "P1"), rate=0.0001)
-    tmp = [f"P{i}" for i in range(2)]
-    demo.add_population_split(time=1000, derived=tmp, ancestral="anc")
+    demo.add_population_split(time=1000, derived=[f"P{i}" for i in range(2)], ancestral="anc")
 
 This is a model where P0 and P1 grow exponentially from an initial size of 5000 at a rate of 0.002 per generation.
 
